@@ -150,6 +150,8 @@ def train(
 
     def do_one_step_eval(carry, action_logits):
         state, key = carry
+        # state: (batch_size, [obs_dim])
+        # where `batch_size` is `num_envs // local_devices_to_use // process_count`
         key, key_sample = jax.random.split(key)
         actions = parametric_action_distribution.sample_no_postprocessing(
             action_logits, key_sample)
@@ -256,6 +258,7 @@ def train(
         # data: (batch_size, unroll_length + 1, [obs_size])
         data = jax.tree_map(
             lambda x: jnp.reshape(x, [x.shape[0], -1] + list(x.shape[3:])), data)
+        # data: (unroll_length + 1, batch_size, [obs_size])
 
         # Update normalization params and normalize observations.
         normalizer_params = obs_normalizer_update_fn(
