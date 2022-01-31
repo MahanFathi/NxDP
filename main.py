@@ -55,7 +55,7 @@ def main():
         plt.plot(xdata, ydata)
         plt.show()
 
-    train(cfg, env_fn, progress_fn=progress)
+    inference_fn, params, metrics = train(cfg, env_fn, progress_fn=progress)
 
 
 if __name__ == '__main__':
