@@ -12,7 +12,10 @@ from functools import partial
 def get_n_dmp(env: env.Env):
     dummy_key = jax.random.PRNGKey(0)
     dummy_state = env.reset(dummy_key)
-    dummy_state_dmp = brax_qp_to_dmp_state(env.sys, dummy_state.qp)
+    qp = dummy_state.qp
+    if jnp.ndim(qp.pos) < 3:
+        qp = jax.tree_map(lambda x: jnp.expand_dims(x, 0), qp)
+    dummy_state_dmp = brax_qp_to_dmp_state(env.sys, qp)
     n_dmp = dummy_state_dmp.y.shape[-1]
     return n_dmp
 
