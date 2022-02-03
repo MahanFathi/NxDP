@@ -201,19 +201,16 @@ def train(
             dones=jnp.concatenate(
                 [data.dones, jnp.expand_dims(state.done, axis=0)]),
             truncation=jnp.concatenate(
-                [data.truncation, jnp.expand_dims(state.info['truncation'],
-                                                  axis=0)]))
-        # TODO: use tree_map
-        data.qp = data.qp.replace(
-            pos=jnp.concatenate(
-                [data.qp.pos, jnp.expand_dims(state.qp.pos, axis=0)]),
-            rot=jnp.concatenate(
-                [data.qp.rot, jnp.expand_dims(state.qp.rot, axis=0)]),
-            vel=jnp.concatenate(
-                [data.qp.vel, jnp.expand_dims(state.qp.vel, axis=0)]),
-            ang=jnp.concatenate(
-                [data.qp.ang, jnp.expand_dims(state.qp.ang, axis=0)]),
-        )
+                [data.truncation, jnp.expand_dims(state.info['truncation'], axis=0)]),
+            qp=data.qp.replace( # TODO: use tree_map
+                pos=jnp.concatenate(
+                    [data.qp.pos, jnp.expand_dims(state.qp.pos, axis=0)]),
+                rot=jnp.concatenate(
+                    [data.qp.rot, jnp.expand_dims(state.qp.rot, axis=0)]),
+                vel=jnp.concatenate(
+                    [data.qp.vel, jnp.expand_dims(state.qp.vel, axis=0)]),
+                ang=jnp.concatenate(
+                    [data.qp.ang, jnp.expand_dims(state.qp.ang, axis=0)])))
         # data: (unroll_length + 1, batch_size, [obs_size])
         return (state, normalizer_params, policy_params, key), data
 
