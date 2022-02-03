@@ -78,7 +78,7 @@ def _get_policy_logits(
         dmp_unroll_length: int,
 ):
     def policy_apply_with_carry(carry, qp_obs):
-        qp, obs = qp, obs
+        qp, obs = qp_obs
         return carry, policy_apply(policy_params, qp, obs)
     _, logits = jax.lax.scan(
         policy_apply_with_carry, None,
