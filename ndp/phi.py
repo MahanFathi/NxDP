@@ -15,7 +15,11 @@ class PhiNet(object):
         self.dmp_state_is_inferred = cfg.DMP.INFER_STATE
         self.n_dmp = cfg.DMP.N_DMP
         self.n_bfs = cfg.DMP.N_BFS
-        output_size = (self.n_dmp + 1 + 2 * self.dmp_state_is_inferred) * self.n_bfs
+        output_size = (
+            self.n_bfs + # each dmp has n_bfs parameters (w) for each basis function
+            1 + # goal
+            2 * self.dmp_state_is_inferred # y, yd
+        ) * self.n_dmp
         self._phi_net = make_model(
             cfg.PHI_NET.FEATURES + [output_size],
             observation_size,
