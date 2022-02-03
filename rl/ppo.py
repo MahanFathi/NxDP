@@ -1,11 +1,12 @@
 from typing import Any, Dict, Callable
 
-from brax.training import distribution
-from util.types import PRNGKey, Params
+import brax
 import flax
 import jax
 import jax.numpy as jnp
 import optax
+from brax.training import distribution
+from util.types import PRNGKey, Params
 from yacs.config import CfgNode
 
 from util.types import *
@@ -72,12 +73,19 @@ def compute_gae(truncation: jnp.ndarray,
 def _get_policy_logits(
         policy_apply: Callable[[Params, jnp.ndarray], jnp.ndarray],
         policy_params: Params,
+        qp: brax.physics.base.QP,
         observations: jnp.ndarray,
         dmp_unroll_length: int,
 ):
-    def policy_apply_with_carry(carry, obs):
-        return carry, policy_apply(policy_params, obs)
-    _, logits = jax.lax.scan(policy_apply_with_carry, None, observations[::dmp_unroll_length])
+    def policy_apply_with_carry(carry, qp_obs):
+        qp, obs = qp, obs
+        return carry, policy_apply(policy_params, qp, obs)
+    _, logits = jax.lax.scan(
+        policy_apply_with_carry, None,
+        (
+            jax.tree_map(lambda x: x[::dmp_unroll_length], qp),
+            observations[::dmp_unroll_length]
+        ))
     return logits.reshape([-1] + list(logits.shape[2:]))
 
 
@@ -100,7 +108,12 @@ def ppo_loss(
 
     policy_params, value_params = models['policy'], models['value']
     # policy_logits = policy_apply(policy_params, data.obs[:-1])
-    policy_logits = _get_policy_logits(policy_apply, policy_params, data.obs[:-1], cfg.DMP.UNROLL_LENGTH)
+    policy_logits = _get_policy_logits(
+        policy_apply,
+        policy_params,
+        jax.tree_map(lambda x: x[:-1], data.qp),
+        data.obs[:-1],
+        cfg.DMP.UNROLL_LENGTH)
     baseline = value_apply(value_params, data.obs)
     baseline = jnp.squeeze(baseline, axis=-1)
 

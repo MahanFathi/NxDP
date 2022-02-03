@@ -142,6 +142,7 @@ def train(
         nstate = step_fn(state, postprocessed_actions)
         return (nstate, key), StepData(
             obs=state.obs,
+            qp=state.qp,
             rewards=state.reward,
             dones=state.done,
             truncation=state.info['truncation'],
@@ -164,7 +165,7 @@ def train(
 
         normalized_obs = obs_normalizer_apply_fn(normalizer_params, state.obs)
         action_logits = policy_model.apply(policy_params,
-                                           state,
+                                           state.qp,
                                            normalized_obs)  # (dmp_unroll_length, batch_size, actions_size)
         (state, key), data = jax.lax.scan(do_one_step, (state, key), action_logits)
         return (state, normalizer_params, policy_params, key), data
@@ -174,7 +175,7 @@ def train(
 
         normalized_obs = obs_normalizer_apply_fn(normalizer_params, state.core.obs)
         action_logits = policy_model.apply(policy_params,
-                                           state,
+                                           state.qp,
                                            normalized_obs)  # (dmp_unroll_length, batch_size, actions_size)
         (state, key), _ = jax.lax.scan(do_one_step_eval, (state, key), action_logits)
         return (state, normalizer_params, policy_params, key), ()
@@ -202,6 +203,17 @@ def train(
             truncation=jnp.concatenate(
                 [data.truncation, jnp.expand_dims(state.info['truncation'],
                                                   axis=0)]))
+        # TODO: use tree_map
+        data.qp = data.qp.replace(
+            pos=jnp.concatenate(
+                [data.qp.pos, jnp.expand_dims(state.qp.pos, axis=0)]),
+            rot=jnp.concatenate(
+                [data.qp.rot, jnp.expand_dims(state.qp.rot, axis=0)]),
+            vel=jnp.concatenate(
+                [data.qp.vel, jnp.expand_dims(state.qp.vel, axis=0)]),
+            ang=jnp.concatenate(
+                [data.qp.ang, jnp.expand_dims(state.qp.ang, axis=0)]),
+        )
         # data: (unroll_length + 1, batch_size, [obs_size])
         return (state, normalizer_params, policy_params, key), data
 
@@ -401,7 +413,7 @@ def make_inference_fn(cfg, observation_size, action_size, dt, normalize_observat
         normalizer_params, policy_params = params
         obs = obs_normalizer_apply_fn(normalizer_params, obs)
         action = parametric_action_distribution.sample(
-            policy_model.apply(policy_params, state, obs), key)
+            policy_model.apply(policy_params, state.qp, obs), key)
         return action
 
     return inference_fn

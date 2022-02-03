@@ -38,7 +38,7 @@ class PhiNet(object):
 
 
     @partial(jax.jit, static_argnums=(0,))
-    def apply(self, params: Params, state: env.State, observations: jnp.ndarray) -> ParamsDMP:
+    def apply(self, params: Params, qp: brax.physics.base.QP, observations: jnp.ndarray) -> ParamsDMP:
         dmp_params = self._phi_net.apply(params, observations)
         dmp_params = jnp.reshape(
             dmp_params,
@@ -52,7 +52,7 @@ class PhiNet(object):
                 x=1.0,
             )
         else:
-            state_dmp = brax_qp_to_dmp_state(self.brax_sys, state.qp)
+            state_dmp = brax_qp_to_dmp_state(self.brax_sys, qp)
 
         inferred_state_index = -2 * self.dmp_state_is_inferred
         return ParamsDMP(

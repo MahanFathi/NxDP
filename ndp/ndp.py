@@ -3,6 +3,7 @@ from functools import partial
 
 import jax
 from jax import numpy as jnp
+import brax
 from brax.envs import env
 from util.types import PRNGKey, Params
 from yacs.config import CfgNode
@@ -53,7 +54,7 @@ class NDP(object):
     def apply(
             self,
             params: Dict[str, Params],
-            state: env.State,
+            qps: brax.physics.base.QP,
             observations: jnp.ndarray, # these might be normalized
     ) -> jnp.ndarray:
         """ Takes the parameters of phi and omega, + a batch of
@@ -61,7 +62,7 @@ class NDP(object):
             `unroll_length` actions.
         """
         phi_params, omega_params = params['phi'], params['omega']
-        dmp_params = self.phi_net.apply(phi_params, state, observations)
+        dmp_params = self.phi_net.apply(phi_params, qps, observations)
         dmp_states = self.dmp.do_dmp_unroll(dmp_params)
         actions = self.omega_net.apply(omega_params, dmp_states)
         return actions

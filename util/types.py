@@ -15,6 +15,7 @@ PRNGKey = jnp.ndarray
 class StepData:
     """Contains data for one environment step."""
     obs: jnp.ndarray
+    qp: brax.physics.base.QP
     rewards: jnp.ndarray
     dones: jnp.ndarray
     truncation: jnp.ndarray
@@ -47,10 +48,10 @@ class ParamsDMP:
 
 @flax.struct.dataclass
 class EvalEnvState:
-  """Env state + eval metrics."""
-  core: envs.State
-  qp: brax.physics.base.QP
-  current_episode_metrics: Dict[str, jnp.ndarray]
-  completed_episodes_metrics: Dict[str, jnp.ndarray]
-  completed_episodes: jnp.ndarray
-  completed_episodes_steps: jnp.ndarray
+    """Env state + eval metrics."""
+    core: envs.State
+    qp: brax.physics.base.QP
+    current_episode_metrics: Dict[str, jnp.ndarray]
+    completed_episodes_metrics: Dict[str, jnp.ndarray]
+    completed_episodes: jnp.ndarray
+    completed_episodes_steps: jnp.ndarray
