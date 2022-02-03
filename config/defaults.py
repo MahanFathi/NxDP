@@ -13,7 +13,7 @@ _C.DMP = CN()
 _C.DMP.N_DMP = 10
 _C.DMP.N_BFS = 10
 _C.DMP.UNROLL_LENGTH = 5
-_C.DMP.INFER_STATE = True
+_C.DMP.INFER_STATE = False
 # TODO: these maybe should be outputted by $\Phi$ net
 _C.DMP.AX = 1.0     # the canonical system's a_x
 _C.DMP.AY = 25.0    # damping
