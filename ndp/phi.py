@@ -7,18 +7,29 @@ from yacs.config import CfgNode
 
 from util.net import make_model
 from util.types import *
+from util.brax import brax_state_to_dmp_state
+
+import warnings
 
 
 class PhiNet(object):
 
-    def __init__(self, cfg: CfgNode, observation_size: int):
+    def __init__(self, cfg: CfgNode, env: env.Env, n_dmp: int = None):
+        self.brax_sys = env.sys
+
+        # figure out n_dmp
         self.dmp_state_is_inferred = cfg.DMP.INFER_STATE
-        self.n_dmp = cfg.DMP.N_DMP
+        self.n_dmp = n_dmp if n_dmp else cfg.DMP.N_DMP
+
         self.n_bfs = cfg.DMP.N_BFS
-        output_size = (self.n_dmp + 1 + 2 * self.dmp_state_is_inferred) * self.n_bfs
+        output_size = (
+            self.n_bfs + # each dmp has n_bfs parameters (w) for each basis function
+            1 + # goal
+            2 * self.dmp_state_is_inferred # y, yd
+        ) * self.n_dmp
         self._phi_net = make_model(
             cfg.PHI_NET.FEATURES + [output_size],
-            observation_size,
+            env.observation_size,
         )
 
 
@@ -26,35 +37,26 @@ class PhiNet(object):
         return self._phi_net.init(key)
 
 
-    @staticmethod
-    def brax_state_to_dmp_state(state: env.State, x: float = .0) -> StateDMP:
-        # TODO: implement this function i.e. handle qp.rot
-        return StateDMP(
-            y=jnp.stack(),
-            yd=jnp.stack(),
-            x=x,
-        )
-
-
     @partial(jax.jit, static_argnums=(0,))
-    def apply(self, params: Params, observations: jnp.ndarray) -> ParamsDMP:
-        """Get the DMP parameters by taking observation as input
-        .input:
-            params: _phi_net parameters
-            obs: (batch_size, observation_size)
-        """
+    def apply(self, params: Params, state: env.State, observations: jnp.ndarray) -> ParamsDMP:
         dmp_params = self._phi_net.apply(params, observations)
         dmp_params = jnp.reshape(
             dmp_params,
             [dmp_params.shape[0], self.n_dmp, -1]
         )
 
-        return ParamsDMP(
-            w=dmp_params[:, :, :-3], # (batch_size, n_dmp, n_bfs)
-            g=dmp_params[:, :,  -3], # (batch_size, n_dmp)
-            s=StateDMP(
-                y=dmp_params[:, :, -2],
-                yd=dmp_params[:, :, -1],
+        if self.dmp_state_is_inferred:
+            state_dmp = StateDMP(
+                y=dmp_params[:, :, -2],  # (batch_size, n_dmp)
+                yd=dmp_params[:, :, -1], # (batch_size, n_dmp)
                 x=1.0,
-            ),
+            )
+        else:
+            state_dmp = brax_state_to_dmp_state(self.sys, state)
+
+        inferred_state_index = -2 * self.dmp_state_is_inferred
+        return ParamsDMP(
+            w=dmp_params[:, :, :(inferred_state_index - 1)], # (batch_size, n_dmp, n_bfs)
+            g=dmp_params[:, :,  (inferred_state_index - 1)], # (batch_size, n_dmp)
+            s=state_dmp,
         )

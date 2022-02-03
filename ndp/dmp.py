@@ -9,18 +9,18 @@ from util.types import *
 
 class DMP(object):
 
-    def __init__(self, cfg: CfgNode, dt: float):
+    def __init__(self, cfg: CfgNode, dt: float, n_dmp: int = None):
 
         # TODO: feed env to DMP to extract the state dims etc
 
         self.dt = dt
 
-        self.n_dmps = cfg.DMP.N_DMP
+        self.n_dmp = n_dmp if n_dmp else cfg.DMP.N_DMP
         self.n_bfs = cfg.DMP.N_BFS
 
         self.ax = cfg.DMP.AX
-        self.ay = jnp.ones(self.n_dmps) * cfg.DMP.AY
-        self.by = self.ay / 4.0 if cfg.DMP.BY is None else jnp.ones(self.n_dmps) * cfg.DMP.AY / cfg.DMP.BY
+        self.ay = jnp.ones(self.n_dmp) * cfg.DMP.AY
+        self.by = self.ay / 4.0 if cfg.DMP.BY is None else jnp.ones(self.n_dmp) * cfg.DMP.AY / cfg.DMP.BY
 
         self.unroll_length = cfg.DMP.UNROLL_LENGTH
         self.tau = cfg.DMP.TAU
@@ -46,12 +46,12 @@ class DMP(object):
     def forcing_fn(
             self,
             x: float,
-            y0: jnp.ndarray, # (batch_size, n_dmps)
+            y0: jnp.ndarray, # (batch_size, n_dmp)
             dmp_params: ParamsDMP,
 
     ):
-        w = dmp_params.w # (batch_size, n_dmps, n_bfs)
-        g = dmp_params.g # (batch_size, n_dmps)
+        w = dmp_params.w # (batch_size, n_dmp, n_bfs)
+        g = dmp_params.g # (batch_size, n_dmp)
 
         psi = self._get_psi(x) # (n_bfs, )
 
@@ -94,7 +94,7 @@ class DMP(object):
     @partial(jax.jit, static_argnums=(0,))
     def do_dmp_unroll(
             self,
-            dmp_params: ParamsDMP, # (batch_size, n_dmps(, ...))
+            dmp_params: ParamsDMP, # (batch_size, n_dmp(, ...))
     ) -> Tuple[StateDMP, Any]:
 
         dmp_state = dmp_params.s
@@ -106,7 +106,7 @@ class DMP(object):
         )
 
         dmp_states = dmp_states.replace(
-            y=jnp.concatenate([dmp_state.y[None, :], dmp_states.y]), # (unroll_length+1, batch_size, n_dmps)
+            y=jnp.concatenate([dmp_state.y[None, :], dmp_states.y]), # (unroll_length+1, batch_size, n_dmp)
             yd=jnp.concatenate([dmp_state.yd[None, :], dmp_states.yd]),
             x=jnp.hstack([jnp.array(dmp_state.x), dmp_states.x]), # (unroll_length+1, )
         )

@@ -12,8 +12,9 @@ from util.types import *
 
 class OmegaNet(object):
 
-    def __init__(self, cfg: CfgNode, target_action_size: int):
+    def __init__(self, cfg: CfgNode, target_action_size: int, n_dmp: int = None):
 
+        self.n_dmp = n_dmp if n_dmp else cfg.DMP.N_DMP
         self._omega_net = make_model(
             cfg.OMEGA_NET.FEATURES + [target_action_size],
             4 * cfg.DMP.N_DMP,

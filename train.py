@@ -95,7 +95,7 @@ def train(
 
     policy_model = NDP(
         cfg,
-        core_env.observation_size,
+        core_env,
         parametric_action_distribution.param_size,
         core_env.sys.config.dt,
     )
@@ -164,6 +164,7 @@ def train(
 
         normalized_obs = obs_normalizer_apply_fn(normalizer_params, state.obs)
         action_logits = policy_model.apply(policy_params,
+                                           state,
                                            normalized_obs)  # (dmp_unroll_length, batch_size, actions_size)
         (state, key), data = jax.lax.scan(do_one_step, (state, key), action_logits)
         return (state, normalizer_params, policy_params, key), data
@@ -173,6 +174,7 @@ def train(
 
         normalized_obs = obs_normalizer_apply_fn(normalizer_params, state.core.obs)
         action_logits = policy_model.apply(policy_params,
+                                           state,
                                            normalized_obs)  # (dmp_unroll_length, batch_size, actions_size)
         (state, key), _ = jax.lax.scan(do_one_step_eval, (state, key), action_logits)
         return (state, normalizer_params, policy_params, key), ()
@@ -395,11 +397,11 @@ def make_inference_fn(cfg, observation_size, action_size, dt, normalize_observat
         dt,
     )
 
-    def inference_fn(params, obs, key):
+    def inference_fn(params, state, obs, key):
         normalizer_params, policy_params = params
         obs = obs_normalizer_apply_fn(normalizer_params, obs)
         action = parametric_action_distribution.sample(
-            policy_model.apply(policy_params, obs), key)
+            policy_model.apply(policy_params, state, obs), key)
         return action
 
     return inference_fn
