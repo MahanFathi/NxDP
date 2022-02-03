@@ -32,7 +32,8 @@ class NDP(object):
             n_dmp = get_n_dmp(env)
             if cfg.DMP.N_DMP != n_dmp:
                 warnings.warn(
-                    "cfg.DMP.N_DMP is incorrect; raised due to cfg.DMP.INFER_STATE=True."
+                    "cfg.DMP.N_DMP is incorrect; raised due to cfg.DMP.INFER_STATE=True. "
+                    "For {} environment, set it to {}.".format(cfg.ENV.ENV_NAME, n_dmp)
                 )
 
         self.dmp = DMP(cfg, timestep, n_dmp)

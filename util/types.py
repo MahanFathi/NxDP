@@ -2,6 +2,7 @@ from typing import Dict
 
 import flax
 import optax
+import brax
 from brax import envs
 from typing import Any
 import jax.numpy as jnp
@@ -48,6 +49,7 @@ class ParamsDMP:
 class EvalEnvState:
   """Env state + eval metrics."""
   core: envs.State
+  qp: brax.physics.base.QP
   current_episode_metrics: Dict[str, jnp.ndarray]
   completed_episodes_metrics: Dict[str, jnp.ndarray]
   completed_episodes: jnp.ndarray

@@ -7,7 +7,7 @@ from yacs.config import CfgNode
 
 from util.net import make_model
 from util.types import *
-from util.brax import brax_state_to_dmp_state
+from util.brax import brax_qp_to_dmp_state
 
 import warnings
 
@@ -52,7 +52,7 @@ class PhiNet(object):
                 x=1.0,
             )
         else:
-            state_dmp = brax_state_to_dmp_state(self.sys, state)
+            state_dmp = brax_qp_to_dmp_state(self.brax_sys, state.qp)
 
         inferred_state_index = -2 * self.dmp_state_is_inferred
         return ParamsDMP(

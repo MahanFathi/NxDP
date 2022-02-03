@@ -17,7 +17,7 @@ class OmegaNet(object):
         self.n_dmp = n_dmp if n_dmp else cfg.DMP.N_DMP
         self._omega_net = make_model(
             cfg.OMEGA_NET.FEATURES + [target_action_size],
-            4 * cfg.DMP.N_DMP,
+            4 * self.n_dmp,
         )
 
 
