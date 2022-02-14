@@ -24,7 +24,7 @@ class Qp2Dmp(object):
         qp = dummy_state.qp
         if jnp.ndim(qp.pos) < 3:
             qp = jax.tree_map(lambda x: jnp.expand_dims(x, 0), qp)
-        dummy_state_dmp = brax_qp_to_dmp_state(qp)
+        dummy_state_dmp = self(qp)
         n_dmp = dummy_state_dmp.y.shape[-1]
         return n_dmp
 
