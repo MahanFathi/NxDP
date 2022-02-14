@@ -12,7 +12,7 @@ from ndp.dmp import DMP
 from ndp.phi import PhiNet
 from ndp.omega import OmegaNet
 from util.types import *
-from util.brax import get_n_dmp
+from util.brax import Qp2Dmp
 
 import warnings
 
@@ -27,10 +27,11 @@ class NDP(object):
             timestep: float,
     ):
         n_dmp = None
+        self.qp2dmp = Qp2Dmp(env)
         if cfg.DMP.INFER_STATE:
             n_dmp = cfg.DMP.N_DMP
         else:
-            n_dmp = get_n_dmp(env)
+            n_dmp = qp2dmp.get_n_dmp()
             if cfg.DMP.N_DMP != n_dmp:
                 warnings.warn(
                     "cfg.DMP.N_DMP is incorrect; raised due to cfg.DMP.INFER_STATE=True. "
@@ -38,7 +39,7 @@ class NDP(object):
                 )
 
         self.dmp = DMP(cfg, timestep, n_dmp)
-        self.phi_net = PhiNet(cfg, env, n_dmp)
+        self.phi_net = PhiNet(cfg, env, self.qp2dmp, n_dmp)
         self.omega_net = OmegaNet(cfg, target_action_size, n_dmp)
 
 

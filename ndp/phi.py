@@ -7,15 +7,16 @@ from yacs.config import CfgNode
 
 from util.net import make_model
 from util.types import *
-from util.brax import brax_qp_to_dmp_state
+from util.brax import Qp2Dmp
 
 import warnings
 
 
 class PhiNet(object):
 
-    def __init__(self, cfg: CfgNode, env: env.Env, n_dmp: int = None):
-        self.brax_sys = env.sys
+    def __init__(self, cfg: CfgNode, env: env.Env, qp2dmp: Qp2Dmp = None, n_dmp: int = None):
+
+        self.qp2dmp = qp2dmp
 
         # figure out n_dmp
         self.dmp_state_is_inferred = cfg.DMP.INFER_STATE
@@ -52,7 +53,7 @@ class PhiNet(object):
                 x=1.0,
             )
         else:
-            state_dmp = brax_qp_to_dmp_state(self.brax_sys, qp)
+            state_dmp = self.qp2dmp(qp)
 
         inferred_state_index = -2 * self.dmp_state_is_inferred
         return ParamsDMP(
