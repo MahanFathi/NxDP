@@ -31,7 +31,7 @@ class NDP(object):
         if cfg.DMP.INFER_STATE:
             n_dmp = cfg.DMP.N_DMP
         else:
-            n_dmp = qp2dmp.get_n_dmp()
+            n_dmp = self.qp2dmp.get_n_dmp()
             if cfg.DMP.N_DMP != n_dmp:
                 warnings.warn(
                     "cfg.DMP.N_DMP is incorrect; raised due to cfg.DMP.INFER_STATE=True. "
