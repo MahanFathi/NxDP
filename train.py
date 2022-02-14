@@ -379,7 +379,7 @@ def train(
 
     inference_fn = make_inference_fn(
         cfg,
-        core_env
+        core_env,
         core_env.sys.config.dt,
         normalize_observations,
     )
