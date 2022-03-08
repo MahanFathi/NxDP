@@ -142,3 +142,6 @@ logs/
 
 # Pycharm
 .idea/
+
+# log files
+logs/
