@@ -44,7 +44,7 @@ def train(
     num_eval_envs = cfg.TRAIN.NUM_EVAL_ENVS
     log_frequency = cfg.LOG.FREQUENCY
     log_to_file = cfg.LOG.TO_FILE
-    save_params = cfg.LOG.SAVE_PARAMS and cfg.LOG.TO_FILE
+    log_save_params = cfg.LOG.SAVE_PARAMS and cfg.LOG.TO_FILE
 
     assert batch_size * num_minibatches % num_envs == 0
     assert unroll_length % dmp_unroll_length == 0
@@ -359,7 +359,7 @@ def train(
                     'speed/timestamp': training_walltime,
                 }))
             logging.info(metrics)
-            if save_params:
+            if log_save_params:
                 save_params(
                     (normalizer_params, policy_params),
                     logger.get_logdir_path(cfg),
