@@ -433,7 +433,7 @@ def save_params(params: Params, logdir: str, name: str):
     params_dir.mkdir(exist_ok=True)
     params_file = params_dir.joinpath("{}.flax".format(name))
 
-    param_bytes = serialization.to_bytes(params)
+    param_bytes = flax.serialization.to_bytes(params)
 
     with open(params_file, "wb") as f:
         f.write(param_bytes)
