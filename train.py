@@ -16,7 +16,7 @@ from yacs.config import CfgNode
 from ndp.ndp import NDP
 from rl import get_rl_loss
 from util.eval import EvalEnvState, wrap_for_eval
-from util import net
+from util import net, logger
 from util.types import *
 
 
@@ -43,13 +43,15 @@ def train(
     normalize_observations = cfg.TRAIN.NORMALIZE_OBSERVATIONS
     num_eval_envs = cfg.TRAIN.NUM_EVAL_ENVS
     log_frequency = cfg.LOG.FREQUENCY
+    log_to_file = cfg.LOG.TO_FILE
+    save_params = cfg.LOG.SAVE_PARAMS and cfg.LOG.TO_FILE
 
     assert batch_size * num_minibatches % num_envs == 0
     assert unroll_length % dmp_unroll_length == 0
     assert episode_length // action_repeat % dmp_unroll_length == 0  # TODO: not necessary
     xt = time.time()
 
-    # KEY MANAGEMENT
+    # PROCESS BOOKKEEPING
     process_count = jax.process_count()
     process_id = jax.process_index()
     local_device_count = jax.local_device_count()
@@ -62,6 +64,11 @@ def train(
         jax.device_count(), process_count, process_id, local_device_count,
         local_devices_to_use)
 
+    # MAKE THEM FILES
+    if log_to_file and process_id == 0:
+        logger.get_logdir_path(cfg)
+
+    # KEY MANAGEMENT
     key = jax.random.PRNGKey(seed)
     key, key_models, key_env, key_eval = jax.random.split(key, 4)
     # Make sure every process gets a different random key, otherwise they will be
@@ -352,6 +359,12 @@ def train(
                     'speed/timestamp': training_walltime,
                 }))
             logging.info(metrics)
+            if save_params:
+                save_params(
+                    (normalizer_params, policy_params),
+                    logger.get_logdir_path(cfg),
+                    str(training_state.normalizer_params[0][0]),
+                )
             if progress_fn:
                 progress_fn(int(training_state.normalizer_params[0][0]) * action_repeat,
                             metrics)
@@ -413,3 +426,14 @@ def make_inference_fn(cfg, core_env, dt, normalize_observations):
         return action
 
     return inference_fn
+
+
+def save_params(self, params: Params, logdir: str, name: str):
+    params_dir = logdir.joinpath("params")
+    params_dir.mkdir(exist_ok=True)
+    params_file = params_dir.joinpath("{}.flax".format(name))
+
+    param_bytes = serialization.to_bytes(params)
+
+    with open(params_file, "wb") as f:
+        f.write(param_bytes)
