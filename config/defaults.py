@@ -81,6 +81,9 @@ _C.TRAIN.PPO.EPSILON = 0.3
 # ---------------------------------------------------------------------------- #
 _C.LOG = CN()
 _C.LOG.FREQUENCY = 20
+_C.LOG.TO_FILE = True # is allowed to create files
+_C.LOG.SAVE_PARAMS = True
+_C.LOG.LOG_DIR = "logs"
 
 
 def get_cfg_defaults():
