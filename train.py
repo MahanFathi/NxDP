@@ -428,7 +428,7 @@ def make_inference_fn(cfg, core_env, dt, normalize_observations):
     return inference_fn
 
 
-def save_params(self, params: Params, logdir: str, name: str):
+def save_params(params: Params, logdir: str, name: str):
     params_dir = logdir.joinpath("params")
     params_dir.mkdir(exist_ok=True)
     params_file = params_dir.joinpath("{}.flax".format(name))
