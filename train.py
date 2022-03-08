@@ -363,7 +363,7 @@ def train(
                 save_params(
                     (normalizer_params, policy_params),
                     logger.get_logdir_path(cfg),
-                    str(training_state.normalizer_params[0][0]),
+                    str(int(training_state.normalizer_params[0][0])),
                 )
             if progress_fn:
                 progress_fn(int(training_state.normalizer_params[0][0]) * action_repeat,
