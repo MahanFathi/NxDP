@@ -391,7 +391,7 @@ def train(
 
     pmap.synchronize_hosts()
 
-    return (inference_fn, params, metrics)
+    return (inference_fn, params, metrics, (obs_normalizer_apply_fn, policy_model, parametric_action_distribution))
 
 
 def make_inference_fn(cfg, observation_size, action_size, dt, normalize_observations):
