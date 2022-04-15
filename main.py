@@ -5,6 +5,7 @@ from config.defaults import get_cfg_defaults
 from brax import envs
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
+from util.logger import get_summary_writer
 
 from train import train
 
@@ -41,6 +42,7 @@ def main():
     ydata = []
     times = [datetime.now()]
 
+    tb_summary_writer = get_summary_writer(cfg)
 
     def progress(num_steps, metrics):
         times.append(datetime.now())
@@ -54,6 +56,11 @@ def main():
         plt.ylabel('reward per episode')
         plt.plot(xdata, ydata)
         plt.show()
+
+        # write tb summaries
+        for key, value in metrics.items():
+            tb_summary_writer.scalar(key, value, num_steps)
+
 
     inference_fn, params, metrics = train(cfg, env_fn, progress_fn=progress)
 
