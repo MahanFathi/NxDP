@@ -10,7 +10,8 @@ def get_logdir_path(cfg: CfgNode) -> Path:
     global LOG_PATH
     if LOG_PATH:
         return LOG_PATH
-    logdir_name = "{}_{}".format(
+    logdir_name = "{}_{}_{}".format(
+        cfg.EXP_NAME,
         cfg.ENV.ENV_NAME,
         datetime.now().strftime("%Y.%m.%d_%H:%M:%S"),
     )
